@@ -1,7 +1,7 @@
 #include <oscore_native/platform.h>
 #include <oscore/context_impl/primitive.h>
 
-const size_t info_maxlen = 1 + \
+#define INFO_MAXLEN  1 + \
     /* Assuming OSCORE_KEYID_MAXLEN is not >255 */ \
     2 + \
     OSCORE_KEYID_MAXLEN + \
@@ -12,7 +12,7 @@ const size_t info_maxlen = 1 + \
     5 + \
     4 + \
     /* Assuming derived lengths all fit in a u16 */ \
-    3;
+    3
 
 extern size_t cbor_intencode(size_t input, uint8_t buf[5], uint8_t type);
 extern size_t cbor_intsize(size_t input);
@@ -50,7 +50,8 @@ oscore_cryptoerr_t _derive_single(
 
     /* Allocating on the careful sidesee @ref stack_allocation_sizes for
      * rationale. */
-    uint8_t infobuf[info_maxlen];
+    
+    uint8_t infobuf [INFO_MAXLEN];
     size_t infobuf_len = 1 + \
             cbor_intsize(id_len) + id_len + \
             cbor_intsize(id_context_len) + id_context_len + \
@@ -58,7 +59,7 @@ oscore_cryptoerr_t _derive_single(
             cbor_intsize(type_len) + type_len + \
             cbor_intsize(dest_len);
 
-    assert(infobuf_len < info_maxlen);
+    assert(infobuf_len < INFO_MAXLEN);
 
     uint8_t *cursor = infobuf;
     *(cursor++) = 0x85; /* list length 5 */
