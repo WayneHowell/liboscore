@@ -499,7 +499,9 @@ enum oscore_prepare_result _prepare_encrypt(
     // request_id
 
     unprotected->backend = protected;
-    unprotected->flags = OSCORE_MSG_PROTECTED_FLAG_WRITABLE | OSCORE_MSG_PROTECTED_FLAG_PENDING_OSCORE;
+    // Set base flags, preserving REQUEST flag if it was already set
+    uint8_t request_flag = unprotected->flags & OSCORE_MSG_PROTECTED_FLAG_REQUEST;
+    unprotected->flags = OSCORE_MSG_PROTECTED_FLAG_WRITABLE | OSCORE_MSG_PROTECTED_FLAG_PENDING_OSCORE | request_flag;
     unprotected->tag_length = tag_length;
     unprotected->payload_offset = 0;
     unprotected->secctx = secctx;
@@ -563,14 +565,14 @@ enum oscore_prepare_result oscore_prepare_request(
 
     oscore_msg_native_set_code(protected, 0x2); // POST
 
-    enum oscore_prepare_result result = _prepare_encrypt(protected, unprotected, secctx);
-
+    // Set the REQUEST flag BEFORE _prepare_encrypt so that flush_autooptions_outer_until()
+    // can see it when building the OSCORE option (required for including KID per RFC 8613 Section 5.4)
     unprotected->flags |= OSCORE_MSG_PROTECTED_FLAG_REQUEST;
 
+    enum oscore_prepare_result result = _prepare_encrypt(protected, unprotected, secctx);
+    
     return result;
-}
-
-enum oscore_finish_result oscore_encrypt_message(
+}enum oscore_finish_result oscore_encrypt_message(
         oscore_msg_protected_t *unprotected,
         oscore_msg_native_t *protected
         )
